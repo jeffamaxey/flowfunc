@@ -72,9 +72,7 @@ def run_in_same_worker(flume_config, out_dict):
     result = {}
     for nodeid, node in runner.run(out_dict).items():
         result[nodeid] = node.dict(exclude={"job", "run_event", "settings"})
-        # Converting results to hashable type
-        node_error = result[nodeid]["error"]
-        if node_error:
+        if node_error := result[nodeid]["error"]:
             result[nodeid]["error"] = str(node_error)
     return result
 
@@ -203,8 +201,7 @@ class JobRunner:
                 if not node.connections.inputs:
                     continue
                 for param, mapping in node.connections.inputs.items():
-                    for connection in mapping:
-                        new_node_ids.append(connection.nodeId)
+                    new_node_ids.extend(connection.nodeId for connection in mapping)
         new_node_ids = list(set(new_node_ids))  # List of unique
         if len(new_node_ids) > len(selected_node_ids):
             return self.dependent_nodes(new_node_ids, mapped_dict)
@@ -238,13 +235,7 @@ class JobRunner:
             if not values:
                 continue
             # If there are more than one control in this port return the dict
-            if len(values) > 1:
-                variable_value = values
-            else:
-                # else return the value of the first item in the dict
-                # TODO: when flume implements option to have multiple inputs
-                # address it here.
-                variable_value = next(iter(values.values()))
+            variable_value = values if len(values) > 1 else next(iter(values.values()))
             if variable_value is None:
                 continue  # This is null coming from react for unset controls
             input_args[key] = variable_value
@@ -294,7 +285,7 @@ class JobRunner:
         output_args = [
             x.name for x in self.flume_config.get_node(out_node.type).outputs
         ]
-        out_node.result_mapped = {x: y for x, y in zip(output_args, method_output)}
+        out_node.result_mapped = dict(zip(output_args, method_output))
         out_node.status = "finished"
 
     async def run_distributed(
@@ -387,7 +378,7 @@ class JobRunner:
         node.run_event.set()
 
     def dict(self, mapped_dict: Dict[str, OutNode], *args, **kwargs) -> dict:
-        ret_dict = {}
-        for nodeid, node in mapped_dict.items():
-            ret_dict[nodeid] = node.dict(*args, **kwargs)
-        return ret_dict
+        return {
+            nodeid: node.dict(*args, **kwargs)
+            for nodeid, node in mapped_dict.items()
+        }

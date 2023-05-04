@@ -20,8 +20,7 @@ class NodeJob(Job):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        node_connections = self.get_meta().get("node_connections")
-        if node_connections:
+        if node_connections := self.get_meta().get("node_connections"):
             self.node_connections = OutConnections(**node_connections)
         else:
             self.node_connections = None
@@ -67,7 +66,7 @@ class NodeJob(Job):
             # If there is only one result item and has to be converted
             # to a tuple to map it onto a dict and later to kwargs
             res = (res,)
-        return {x: y for x, y in zip(self.result_keys, res)}
+        return dict(zip(self.result_keys, res))
 
 
 class NodeQueue(Queue):

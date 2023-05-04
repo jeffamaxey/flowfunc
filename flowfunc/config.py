@@ -31,14 +31,10 @@ def process_port_docstring(param, ptype) -> Port:
     output_dict: dict
         Port data as dictionary
     """
-    d = {}
     # Find out the different type options
     port_types = param.type_name.replace(" or ", ",").split(",")
-    port_types = sorted(set([p.strip() for p in port_types]))
-    # The type of the port should be unique depending on the different
-    # datatypes it accepts
-    d["type"] = "|".join(port_types)
-    d["acceptTypes"] = port_types
+    port_types = sorted({p.strip() for p in port_types})
+    d = {"type": "|".join(port_types), "acceptTypes": port_types}
     if ptype == "input":
         d["name"] = param.arg_name
         d["label"] = f"{param.arg_name} ({','.join(d['acceptTypes'])})"
@@ -71,13 +67,14 @@ def process_node_docstring(func: Callable) -> Node:
     -------
     node_dict: dict
     """
-    node_dict = {}
     if not func.__doc__:
         raise Exception("Empty doc string!")
     parsed = parse(func.__doc__)
-    node_dict["method"] = func
-    node_dict["type"] = ".".join([func.__module__, func.__name__])
-    node_dict["label"] = func.__name__.replace("_", " ").title()
+    node_dict = {
+        "method": func,
+        "type": ".".join([func.__module__, func.__name__]),
+        "label": func.__name__.replace("_", " ").title(),
+    }
     node_dict["module"] = func.__module__
     node_dict["description"] = parsed.short_description
 
@@ -183,12 +180,11 @@ def process_output_inspect(pobj):
                 label="object",
             )
         ]
-    return_types = []
     origin = get_origin(pobj)
     if origin == tuple:
+        return_types = []
         for t in get_args(pobj):
-            tt = get_origin(t)
-            if tt:
+            if tt := get_origin(t):
                 return_types.append(
                     process_port_inspect(str(tt).replace("typing.", ""), t)
                 )
@@ -219,11 +215,12 @@ def process_node_inspect(func: Callable) -> Node:
     -------
     node_dict: dict
     """
-    node_dict = {}
     sign = inspect.signature(func)
-    node_dict["method"] = func
-    node_dict["type"] = ".".join([func.__module__, func.__name__])
-    node_dict["label"] = func.__name__.replace("_", " ").strip().title()
+    node_dict = {
+        "method": func,
+        "type": ".".join([func.__module__, func.__name__]),
+        "label": func.__name__.replace("_", " ").strip().title(),
+    }
     node_dict["module"] = func.__module__
     try:
         node_dict["description"] = func.__doc__.strip().split("\n")[0]
@@ -293,7 +290,11 @@ def control_from_field(
             name=cname,
             label=clabel,
         )
-    if port and port.acceptTypes and any([x in control_types for x in port.acceptTypes]):
+    if (
+        port
+        and port.acceptTypes
+        and any(x in control_types for x in port.acceptTypes)
+    ):
         # If any of the accepted type has a corresponding control
         for t in port.acceptTypes:
             if t in control_types:
@@ -318,28 +319,24 @@ def ports_from_nodes(nodes: List[Node]) -> List[Port]:
         if inspect.isclass(port.py_type) and issubclass(port.py_type, BaseModel):
             # Use a pydantic model
             port.controls = []
-            for arg_name, field in port.py_type.__fields__.items():
-                port.controls.append(
-                    control_from_field(
-                        field.name,
-                        field.outer_type_,
-                    )
+            port.controls.extend(
+                control_from_field(
+                    field.name,
+                    field.outer_type_,
                 )
+                for arg_name, field in port.py_type.__fields__.items()
+            )
         elif inspect.isclass(port.py_type) and is_dataclass(port.py_type):
             port.controls = []
-            for field in fields(port.py_type):
-                port.controls.append(
-                    control_from_field(
-                        field.name,
-                        field.type,
-                    )
+            port.controls.extend(
+                control_from_field(
+                    field.name,
+                    field.type,
                 )
-
-        else:
-            control = control_from_field(port.name, port.py_type, port)
-            # Dont set controls if there are no controls corresponding to type
-            if control:
-                port.controls = [control]
+                for field in fields(port.py_type)
+            )
+        elif control := control_from_field(port.name, port.py_type, port):
+            port.controls = [control]
 
     return ports
 
@@ -389,7 +386,7 @@ class Config:
         if extra_ports is None:
             extra_ports = []
         ports = list(set(extra_ports + ports_from_nodes(nodes)))
-        nodes = nodes + extra_nodes
+        nodes += extra_nodes
         return cls(nodes, ports)
 
     def __init__(self, nodes, ports=None) -> None:

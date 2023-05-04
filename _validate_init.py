@@ -32,9 +32,9 @@ def check_dist(dist, filename):
         filename in x
         for d in dist
         for x in (
-            [d.get('relative_package_path')]
-            if not isinstance(d.get('relative_package_path'), list)
-            else d.get('relative_package_path')
+            d.get('relative_package_path')
+            if isinstance(d.get('relative_package_path'), list)
+            else [d.get('relative_package_path')]
         )
     )
 

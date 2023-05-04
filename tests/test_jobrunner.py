@@ -31,7 +31,7 @@ def test_run_add():
     assert results["node_3"].result_mapped == {"result": results["node_3"].result}
     assert results["node_4"].result == results["node_2"].result + results["node_5"].result
     assert results["node_5"].result == results["node_1"].result + results["node_3"].result
-    assert all([n.status == "finished" for n in results.values()])
+    assert all(n.status == "finished" for n in results.values())
 
 
 def test_run_add_async():
@@ -51,7 +51,7 @@ def test_run_add_async():
     assert results["node_3"].result_mapped == {"result": results["node_3"].result}
     assert results["node_4"].result == results["node_2"].result + results["node_5"].result
     assert results["node_5"].result == results["node_1"].result + results["node_3"].result
-    assert all([n.status == "finished" for n in results.values()])
+    assert all(n.status == "finished" for n in results.values())
 
 def test_run_add_async_return_coroutine():
     """JobRunner returns a coroutine"""
@@ -71,7 +71,7 @@ def test_run_add_async_return_coroutine():
     assert results["node_3"].result_mapped == {"result": results["node_3"].result}
     assert results["node_4"].result == results["node_2"].result + results["node_5"].result
     assert results["node_5"].result == results["node_1"].result + results["node_3"].result
-    assert all([n.status == "finished" for n in results.values()])
+    assert all(n.status == "finished" for n in results.values())
 
 def test_null_values():
     """Testing basic functionality"""
@@ -111,4 +111,4 @@ def test_run_add_async_dependent():
     assert results["node_3"].result == 4 + results["node_1"].result
     assert results["node_3"].result_mapped == {"result": results["node_3"].result}
     assert results["node_5"].result == results["node_1"].result + results["node_3"].result
-    assert all([n.status == "finished" for n in results.values()])
+    assert all(n.status == "finished" for n in results.values())

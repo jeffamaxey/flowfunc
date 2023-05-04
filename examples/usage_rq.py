@@ -105,13 +105,10 @@ def display_output(runclicks, nodes):
     if not nodes:
         return {}
     nodes_output = job_runner.run(nodes)
-    store = {}
-    for nodeid, node in nodes_output.items():
-        store[nodeid] = node.dict(
-            exclude={"run_event", "job"}
-        )
-
-    return store
+    return {
+        nodeid: node.dict(exclude={"run_event", "job"})
+        for nodeid, node in nodes_output.items()
+    }
 
 @app.callback(
     [
@@ -134,9 +131,9 @@ def get_status(ninterval, data):
         node = OutNode.parse_obj(node)
         job = NodeJob.fetch(OutNode.parse_obj(node).job_id, connection=rconn)
         status[nodeid] = job.get_status()
-        if not job.result is None and "display" in node.type:
+        if job.result is not None and "display" in node.type:
             result.append(job.result)
-    if any([x in ["started", "deferred"] for x in status.values()]):
+    if any(x in ["started", "deferred"] for x in status.values()):
         interval = 1000
     return result, status, interval
 

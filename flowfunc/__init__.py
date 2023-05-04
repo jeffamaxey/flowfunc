@@ -30,31 +30,25 @@ _this_module = _sys.modules[__name__]
 
 async_resources = []
 
-_js_dist = []
-
-_js_dist.extend(
-    [
-        {
-            "relative_package_path": "async-{}.js".format(async_resource),
-            "external_url": (
-                "https://unpkg.com/{0}@{2}"
-                "/{1}/async-{3}.js"
-            ).format(package_name, __name__, __version__, async_resource),
-            "namespace": package_name,
-            "async": True,
-        }
-        for async_resource in async_resources
-    ]
-)
+_js_dist = [
+    {
+        "relative_package_path": f"async-{async_resource}.js",
+        "external_url": (
+            "https://unpkg.com/{0}@{2}" "/{1}/async-{3}.js"
+        ).format(package_name, __name__, __version__, async_resource),
+        "namespace": package_name,
+        "async": True,
+    }
+    for async_resource in async_resources
+]
 
 # TODO: Figure out if unpkg link works
 _js_dist.extend(
     [
         {
-            "relative_package_path": "async-{}.js.map".format(async_resource),
+            "relative_package_path": f"async-{async_resource}.js.map",
             "external_url": (
-                "https://unpkg.com/{0}@{2}"
-                "/{1}/async-{3}.js.map"
+                "https://unpkg.com/{0}@{2}" "/{1}/async-{3}.js.map"
             ).format(package_name, __name__, __version__, async_resource),
             "namespace": package_name,
             "dynamic": True,
@@ -67,12 +61,12 @@ _js_dist.extend(
     [
         {
             'relative_package_path': 'flowfunc.min.js',
-    
+
             'namespace': package_name
         },
         {
             'relative_package_path': 'flowfunc.min.js.map',
-    
+
             'namespace': package_name,
             'dynamic': True
         }
